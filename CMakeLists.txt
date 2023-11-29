@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-set(PROJECT_NAME project_base)
+set(PROJECT_NAME rg_projekat)
 project(${PROJECT_NAME})
 
 function(watch)
@@ -10,6 +10,7 @@ function(watch)
     )
 endfunction()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POLICY_DEFAULT_CMP0012 NEW)
 set(CMAKE_CXX_STANDARD 14)
 
