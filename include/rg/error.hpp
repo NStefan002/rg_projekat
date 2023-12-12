@@ -1,10 +1,11 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-#include <iostream>
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <iostream>
 
-#define LOG(msg) std::cerr << msg << "\n[" << __FILE__ << ", " << __func__ << ", " << __LINE__ << "] "
+#define LOG(msg) std::cerr << msg << "\n[" << __FILE__ << ", " << __func__ << ", " << __LINE__ << "]" << std::endl;
 
 #define ASSERT(cond, msg)                                                                                              \
     do                                                                                                                 \
@@ -12,6 +13,8 @@
         if (!(cond))                                                                                                   \
         {                                                                                                              \
             LOG(msg);                                                                                                  \
+            __builtin_trap();                                                                                          \
+            glfwTerminate();                                                                                           \
         }                                                                                                              \
     } while (0)
 
@@ -23,40 +26,10 @@
         ASSERT(wasPreviousOpenGLCallSuccessful());                                                                     \
     } while (0)
 
-void clearAllOpenGlErrors()
-{
-    while (glGetError() != GL_NO_ERROR)
-        ;
-}
-const char *openGLErrorToString(GLenum error)
-{
-    switch (error)
-    {
-    case GL_NO_ERROR:
-        return "GL_NO_ERROR";
-    case GL_INVALID_ENUM:
-        return "GL_INVALID_ENUM";
-    case GL_INVALID_VALUE:
-        return "GL_INVALID_VALUE";
-    case GL_INVALID_OPERATION:
-        return "GL_INVALID_OPERATION";
-    case GL_OUT_OF_MEMORY:
-        return "GL_OUT_OF_MEMORY";
-    }
-    ASSERT(false, "Invalid error code.");
-    return "THIS_SHOULD_NEVER_HAPPEN";
-}
-bool wasPreviousOpenGLCallSuccessful(const char *file, int line, const char *call)
-{
-    bool success = true;
-    GLenum err;
-    while ((err = glGetError()))
-    {
-        LOG(openGLErrorToString(err));
-        success = false;
-    }
+void clearAllOpenGlErrors();
 
-    return success;
-}
+const char *openGLErrorToString(GLenum error);
+
+bool wasPreviousOpenGLCallSuccessful(const char *file, int line, const char *call);
 
 #endif // !ERROR_H

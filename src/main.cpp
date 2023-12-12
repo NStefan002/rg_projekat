@@ -4,23 +4,26 @@
 #include <iostream>
 #include <cmath>
 
-#include <rg/error.h>
+#include <rg/error.hpp>
 
 #include <glm/glm.hpp>
 
-#include <learnopengl/camera.h>
-#include <learnopengl/shader.h>
-#include <learnopengl/filesystem.h>
+#include <rg/camera.hpp>
+#include <rg/shader.hpp>
+#include <rg/filesystem.hpp>
+#include <rg/mesh.hpp>
+#include <rg/model.hpp>
 
 #include <stb_image.h>
 
-const int WinWidth = 1200;
-const int WinHeight = 900;
-
 void framebuf_size_callback(GLFWwindow *window, int width, int height);
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void proccess_input(GLFWwindow *window);
+
+const int WinWidth = 1200;
+const int WinHeight = 900;
 
 int main()
 {
@@ -31,26 +34,21 @@ int main()
 
     GLFWwindow *window = glfwCreateWindow(WinWidth, WinHeight, "RG PROJEKAT", nullptr, nullptr);
 
-    if (nullptr == window)
-    {
-        ASSERT(false, "Failed to create window.");
-        glfwTerminate();
-        return -1;
-    }
+    ASSERT(nullptr != window, "Failed to create window.");
 
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuf_size_callback);
+    glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cerr << "Failed to init GLAD\n";
-        glfwTerminate();
-        return -1;
-    }
+    ASSERT(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress), "Failed to initialize GLAD.");
+    stbi_set_flip_vertically_on_load(true);
 
-    // ...
+    glEnable(GL_DEPTH_TEST);
+
+    Shader shader("resources/shaders/vertex_shader.vs", "resources/shaders/fragment_shader.fs");
 
     while (!glfwWindowShouldClose(window))
     {
@@ -72,6 +70,15 @@ void framebuf_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    // exit
+    if ((key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q) && action == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, true);
+    }
+}
+
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
 }
@@ -82,12 +89,6 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 
 void proccess_input(GLFWwindow *window)
 {
-    // exit
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
-
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
         // move forwards
