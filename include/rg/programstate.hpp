@@ -16,8 +16,8 @@ class ProgramState
     bool cameraMouseMovementEnabled = true;
     PointLight pointLight;
     // objects positions
-    glm::vec3 chairPosition = glm::vec3(0.f);
-    float chairScale = 1.f;
+    glm::vec3 objectPosition = glm::vec3(0.f);
+    float objectScale = 1.f;
 
     ProgramState() : camera(glm::vec3(0.f, 0.f, 3.f)) {}
 
