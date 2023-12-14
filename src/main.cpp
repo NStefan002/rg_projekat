@@ -27,7 +27,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void proccess_input(GLFWwindow *window);
-void draw_imgui(ProgramState *programState);
+void draw_imgui();
 
 // window
 const int WinWidth = 1200;
@@ -138,7 +138,7 @@ int main()
 
         if (programState->imguiEnabled)
         {
-            draw_imgui(programState);
+            draw_imgui();
         }
 
         glfwSwapBuffers(window);
