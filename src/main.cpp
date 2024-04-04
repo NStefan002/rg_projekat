@@ -72,6 +72,11 @@ int main()
     ASSERT(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress), "Failed to initialize GLAD.");
     // stbi_set_flip_vertically_on_load(true);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glFrontFace(GL_CW);
+
     programState = new ProgramState();
     programState->loadFromFile("resources/program_state.txt");
     if (programState->imguiEnabled)
@@ -94,7 +99,6 @@ int main()
     Shader *skyboxShader = new Shader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader *textureShader = new Shader("resources/shaders/plate.vs", "resources/shaders/plate.fs");
 
-                              -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
     float skyboxVertices[] = {-1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
                               1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f,
 
@@ -230,6 +234,9 @@ int main()
                      1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+
         shader->use();
         // pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
         shader->setVec3("pointLight.position", pointLight.position);
@@ -248,11 +255,14 @@ int main()
         shader->setMat4("view", view);
 
         // textureShader->setMat4("projection", projection);
+
         glm::mat4 model = glm::mat4(1.f);
         model = glm::translate(model, programState->objectPosition);
         model = glm::scale(model, glm::vec3(programState->objectScale));
         shader->setMat4("model", model);
         helicopter.Draw(*shader);
+
+        glDisable(GL_CULL_FACE);
 
         glBindTexture(GL_TEXTURE_2D, texture);
         textureShader->use();
