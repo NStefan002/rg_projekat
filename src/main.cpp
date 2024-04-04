@@ -92,9 +92,10 @@ int main()
 
     Shader *shader = new Shader("resources/shaders/vertex_shader.vs", "resources/shaders/fragment_shader.fs");
     Shader *skyboxShader = new Shader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    Shader *textureShader = new Shader("resources/shaders/plate.vs", "resources/shaders/plate.fs");
 
-    float skyboxVertices[] = {
                               -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
+    float skyboxVertices[] = {-1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
                               1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f,
 
                               -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f,
@@ -142,7 +143,7 @@ int main()
 
     PointLight &pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(2.1, 2.1, 2.1);
+    pointLight.ambient = glm::vec3(1.1, 1.1, 1.1);
     pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
@@ -150,8 +151,72 @@ int main()
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
 
+    float plate_vertices[] = {
+        //     positions         colors     texture coords
+        10.5f,  10.5f,  -1.8f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
+        10.5f,  -10.5f, -1.8f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+        -10.5f, -10.5f, -1.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+        -10.5f, 10.5f,  -1.8f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left
+    };
+    unsigned int plate_indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
+    };
+
+    unsigned int VBO, VAO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(plate_vertices), plate_vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(plate_indices), plate_indices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // texture coord attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    // load and create a texture
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    unsigned char *data =
+        stbi_load(FileSystem::getPath("resources/textures/concrete.jpg").c_str(), &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    textureShader->use();
+    textureShader->setInt("texture_sampler", 0);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -182,11 +247,31 @@ int main()
         shader->setMat4("projection", projection);
         shader->setMat4("view", view);
 
+        // textureShader->setMat4("projection", projection);
         glm::mat4 model = glm::mat4(1.f);
         model = glm::translate(model, programState->objectPosition);
         model = glm::scale(model, glm::vec3(programState->objectScale));
         shader->setMat4("model", model);
         helicopter.Draw(*shader);
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+        textureShader->use();
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        textureShader->setMat4("projection", projection);
+        textureShader->setMat4("view", view);
+        float angle = 90.0f;
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
+        textureShader->setMat4("model", model);
+        textureShader->setBool("blinn", false);
+
+        textureShader->setVec3("viewPos", programState->camera.Position);
+        textureShader->setFloat("material.shininess", 32.0f);
+        // directional light
+        textureShader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        textureShader->setVec3("dirLight.ambient", programState->pointLight.ambient);
+        textureShader->setVec3("dirLight.diffuse", programState->pointLight.diffuse * 5.0f);
+        textureShader->setVec3("dirLight.specular", programState->pointLight.specular);
 
         // draw skybox as last
         glDepthFunc(
@@ -213,7 +298,12 @@ int main()
     }
 
     programState->saveToFile("resources/program_state.txt");
+
+    // free memory
     delete programState;
+    delete shader;
+    delete textureShader;
+    delete skyboxShader;
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
