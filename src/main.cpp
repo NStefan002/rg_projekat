@@ -102,6 +102,7 @@ int main()
     Shader *shader = new Shader("resources/shaders/vertex_shader.vs", "resources/shaders/fragment_shader.fs");
     Shader *skyboxShader = new Shader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader *textureShader = new Shader("resources/shaders/plate.vs", "resources/shaders/plate.fs");
+    Shader *transparentShader = new Shader("resources/shaders/plate.vs", "resources/shaders/plate.fs");
     Shader *hdrShader = new Shader("resources/shaders/hdr.vs", "resources/shaders/hdr.fs");
 
     float skyboxVertices[] = {-1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
@@ -197,6 +198,18 @@ int main()
         1, 2, 3  // second triangle
     };
 
+    // first -> translate, second -> rotate by 90 degrees
+    std::vector<std::pair<glm::vec3, glm::vec3>> glass_positions = {
+        // left/right side
+        {glm::vec3(-8.7f, 12.3f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f)},
+        {glm::vec3(12.4f, 12.3f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f)},
+        // front/back side
+        {glm::vec3(0.f, 12.3f, 12.f), glm::vec3(0.0f, 0.0f, 1.0f)},
+        {glm::vec3(0.f, 12.3f, -8.5f), glm::vec3(0.0f, 0.0f, 1.0f)},
+        // top side
+        {glm::vec3(0.f, 21.f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)},
+    };
+
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -221,12 +234,15 @@ int main()
     glEnableVertexAttribArray(2);
 
     unsigned int plate_texture = loadTexture("resources/textures/concrete.jpg");
+    unsigned int transparent_texture = loadTexture("resources/textures/binding-dark.png");
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     textureShader->use();
     textureShader->setInt("texture_sampler", 0);
+    transparentShader->use();
+    transparentShader->setInt("texture_sampler", 0);
 
     hdrShader->use();
     hdrShader->setInt("hdrBuffer", 0);
@@ -269,8 +285,6 @@ int main()
         glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // textureShader->setMat4("projection", projection);
-
         glm::mat4 model = glm::mat4(1.f);
         model = glm::translate(model, programState->objectPosition);
         model = glm::scale(model, glm::vec3(programState->objectScale));
@@ -293,10 +307,35 @@ int main()
         textureShader->setVec3("viewPos", programState->camera.Position);
         textureShader->setFloat("material.shininess", 32.0f);
         // directional light
-        textureShader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        textureShader->setVec3("dirLight.direction", 10.0 * cos(currentFrame), 10.0f, 10.0 * sin(currentFrame));
         textureShader->setVec3("dirLight.ambient", programState->pointLight.ambient);
         textureShader->setVec3("dirLight.diffuse", programState->pointLight.diffuse * 5.0f);
         textureShader->setVec3("dirLight.specular", programState->pointLight.specular);
+
+        for (auto settings : glass_positions)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, programState->objectPosition);
+            transparentShader->use();
+            glBindVertexArray(VAO);
+            glBindTexture(GL_TEXTURE_2D, transparent_texture);
+            transparentShader->setMat4("projection", projection);
+            transparentShader->setMat4("view", view);
+            model = glm::translate(model, settings.first);
+            float angle = 90.f;
+            model = glm::rotate(model, glm::radians(angle), settings.second);
+            transparentShader->setMat4("model", model);
+            transparentShader->setVec3("viewPos", programState->camera.Position);
+            transparentShader->setBool("blinn", programState->blinn);
+            transparentShader->setFloat("material.shininess", 32.0f);
+            // directional light
+            transparentShader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+            transparentShader->setVec3("dirLight.ambient", programState->pointLight.ambient);
+            transparentShader->setVec3("dirLight.diffuse", programState->pointLight.diffuse * 5.0f);
+            transparentShader->setVec3("dirLight.specular", programState->pointLight.specular);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
 
         // draw skybox as last
         glDepthFunc(
