@@ -47,9 +47,7 @@ float deltaTime = 0.f;
 float lastFrame = 0.f;
 
 // hdr
-bool hdr = true;
 bool hdrKeyPressed = false;
-float exposure = 1.0f;
 
 ProgramState *programState;
 
@@ -222,31 +220,7 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    // load and create a texture
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-    glBindTexture(GL_TEXTURE_2D, texture);
-    // set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    unsigned char *data =
-        stbi_load(FileSystem::getPath("resources/textures/concrete.jpg").c_str(), &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
+    unsigned int plate_texture = loadTexture("resources/textures/concrete.jpg");
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -305,7 +279,7 @@ int main()
 
         glDisable(GL_CULL_FACE);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, plate_texture);
         textureShader->use();
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -314,7 +288,7 @@ int main()
         float angle = 90.0f;
         model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
         textureShader->setMat4("model", model);
-        textureShader->setBool("blinn", false);
+        textureShader->setBool("blinn", programState->blinn);
 
         textureShader->setVec3("viewPos", programState->camera.Position);
         textureShader->setFloat("material.shininess", 32.0f);
@@ -353,11 +327,9 @@ int main()
         hdrShader->use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorBuffer);
-        hdrShader->setInt("hdr", hdr);
-        hdrShader->setFloat("exposure", exposure);
+        hdrShader->setInt("hdr", programState->hdr);
+        hdrShader->setFloat("exposure", programState->exposure);
         renderQuad();
-
-        std::cout << "hdr: " << (hdr ? "on" : "off") << "| exposure: " << exposure << std::endl;
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -461,7 +433,7 @@ void proccess_input(GLFWwindow *window)
     }
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !hdrKeyPressed)
     {
-        hdr = !hdr;
+        programState->hdr = !programState->hdr;
         hdrKeyPressed = true;
     }
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
@@ -470,14 +442,14 @@ void proccess_input(GLFWwindow *window)
     }
     if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
     {
-        if (exposure > 0.0f)
-            exposure -= 0.01f;
+        if (programState->exposure > 0.0f)
+            programState->exposure -= 0.01f;
         else
-            exposure = 0.0f;
+            programState->exposure = 0.0f;
     }
     else if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
     {
-        exposure += 0.01f;
+        programState->exposure += 0.01f;
     }
 }
 
@@ -499,6 +471,9 @@ void draw_imgui()
         ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
+        ImGui::Checkbox("blinn", &programState->blinn);
+        ImGui::Checkbox("hdr", &programState->hdr);
+        ImGui::DragFloat("exposure", &programState->exposure, 0.05, 0.0, 5.0);
         ImGui::End();
     }
 

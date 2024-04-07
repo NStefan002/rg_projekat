@@ -18,6 +18,9 @@ class ProgramState
     // objects positions
     glm::vec3 objectPosition = glm::vec3(0.f);
     float objectScale = 1.f;
+    bool blinn = false;
+    bool hdr = false;
+    float exposure = 1.f;
 
     ProgramState() : camera(glm::vec3(0.f, 0.f, 3.f)) {}
 
