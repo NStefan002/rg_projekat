@@ -7,6 +7,12 @@
 3. `./compile.sh;` --> runs the script that compiles the code
 4. `./rg_projekat` --> runs program
 
+# Controls
+- `a`, `w`, `s`, `d` - move in the desired direction
+- `F1` - toggle ImGui
+- `space` - toggle hdr
+- `i`, `o` - increase/decrease exposure (when `hdr` is on)
+
 # Project structure
 ```
 ├─ cmake/           CMake utils
@@ -22,5 +28,5 @@
 # Sources
 
 - [Models](https://www.cadnav.com/3d-models/)
-- [Textures](https://www.cadnav.com/textures) and some other [textures](https://www.pngwing.com/)
+- [Textures](https://www.cadnav.com/textures) and some other [textures](https://www.transparenttextures.com/)
 - [Skybox](https://opengameart.org/content/park-skyboxes)
