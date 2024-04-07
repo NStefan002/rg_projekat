@@ -162,12 +162,12 @@ int main()
     // -Y (bottom)
     // +Z (front)
     // -Z (back)
-    std::vector<std::string> faces{FileSystem::getPath("resources/textures/field-skyboxes/Meadow/posx.jpg"),
-                                   FileSystem::getPath("resources/textures/field-skyboxes/Meadow/negx.jpg"),
-                                   FileSystem::getPath("resources/textures/field-skyboxes/Meadow/posy.jpg"),
-                                   FileSystem::getPath("resources/textures/field-skyboxes/Meadow/negy.jpg"),
-                                   FileSystem::getPath("resources/textures/field-skyboxes/Meadow/posz.jpg"),
-                                   FileSystem::getPath("resources/textures/field-skyboxes/Meadow/negz.jpg")};
+    std::vector<std::string> faces{FileSystem::getPath("resources/textures/skybox/posx.jpg"),
+                                   FileSystem::getPath("resources/textures/skybox/negx.jpg"),
+                                   FileSystem::getPath("resources/textures/skybox/posy.jpg"),
+                                   FileSystem::getPath("resources/textures/skybox/negy.jpg"),
+                                   FileSystem::getPath("resources/textures/skybox/posz.jpg"),
+                                   FileSystem::getPath("resources/textures/skybox/negz.jpg")};
     unsigned int cubemapTexture = loadCubemap(faces);
     skyboxShader->use();
     skyboxShader->setInt("skybox", 0);
