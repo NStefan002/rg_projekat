@@ -9,6 +9,7 @@
 
 # Controls
 - `a`, `w`, `s`, `d` - move in the desired direction
+- `q` / `Esc` - exit
 - `F1` - toggle ImGui
 - `space` - toggle hdr
 - `i`, `o` - increase/decrease exposure (when `hdr` is on)
@@ -30,3 +31,7 @@
 - [Models](https://www.cadnav.com/3d-models/)
 - [Textures](https://www.cadnav.com/textures) and some other [textures](https://www.transparenttextures.com/)
 - [Skybox](https://opengameart.org/content/park-skyboxes)
+- [Parts of the code](https://github.com/JoeyDeVries/LearnOpenGL)
+
+> [!NOTE]
+> Group A --> Cubemaps, Group B --> HDR, Bloom
