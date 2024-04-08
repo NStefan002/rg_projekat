@@ -316,6 +316,7 @@ int main()
         {
             model = glm::mat4(1.0f);
             model = glm::translate(model, programState->objectPosition);
+            model = glm::scale(model, glm::vec3(programState->objectScale));
             transparentShader->use();
             glBindVertexArray(VAO);
             glBindTexture(GL_TEXTURE_2D, transparent_texture);
