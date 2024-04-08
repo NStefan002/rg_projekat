@@ -381,6 +381,8 @@ int main()
     delete shader;
     delete textureShader;
     delete skyboxShader;
+    delete transparentShader;
+    delete hdrShader;
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
