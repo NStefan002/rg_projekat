@@ -35,3 +35,6 @@
 
 > [!NOTE]
 > Group A --> Cubemaps, Group B --> HDR, Bloom
+
+# Showcase
+[YouTube](https://youtu.be/ip6DghDATA8)
